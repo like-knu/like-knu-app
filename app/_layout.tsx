@@ -7,6 +7,7 @@ import useInitializeDevice from '@/utils/device';
 import http from '@/utils/http';
 import '@/utils/pushNotifications';
 import { ActionSheetProvider } from '@expo/react-native-action-sheet';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import analytics from '@react-native-firebase/analytics';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
@@ -138,26 +139,40 @@ const Content = () => {
   }, [pathname]);
 
   useEffect(() => {
-    const handleResponse = (response: Notifications.NotificationResponse) => {
-      const data = response.notification.request.content.data as { url?: string } | undefined;
-      if (data?.url) {
-        router.push({
-          pathname: '/announcement/details',
-          params: {
-            url: data.url,
-            id: '',
-            isBookmark: 'false',
-            isAd: 'false'
-          }
-        });
-      } else {
-        router.push('/notification');
-      }
+    const HANDLED_KEY = 'handledNotificationIds';
+
+    const handleResponse = async (response: Notifications.NotificationResponse) => {
+      const id = response.notification.request.identifier;
+      // Android cold start에서 id=null인 phantom response가 매번 발화하는 이슈 차단
+      if (!id) return;
+
+      const raw = await AsyncStorage.getItem(HANDLED_KEY);
+      const handled: string[] = raw ? JSON.parse(raw) : [];
+      if (handled.includes(id)) return;
+
+      await AsyncStorage.setItem(
+        HANDLED_KEY,
+        JSON.stringify([...handled, id].slice(-50))
+      );
+
+      const data = response.notification.request.content.data as {
+        url?: string;
+        notificationId?: string | number;
+      } | undefined;
+      router.push({
+        pathname: '/notification',
+        params: {
+          autoOpenUrl: data?.url ?? '',
+          autoOpenNotificationId: data?.notificationId != null ? String(data.notificationId) : ''
+        }
+      });
     };
 
-    Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (response) handleResponse(response);
-    });
+    const response = Notifications.getLastNotificationResponse();
+    if (response) {
+      handleResponse(response);
+      Notifications.clearLastNotificationResponse();
+    }
 
     const subscription = Notifications.addNotificationResponseReceivedListener(handleResponse);
     return () => subscription.remove();

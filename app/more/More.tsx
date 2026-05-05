@@ -26,7 +26,7 @@ const More = () => {
         <FontText fontWeight="600" style={[styles.settingTitle, { color: colors[theme].gray100 }]}>알림</FontText>
         <NotificationSetting />
         <FontText style={[styles.version, { color: colors[theme].gray200 }]}>
-          버전 {Application.nativeApplicationVersion}
+          버전 {Application.nativeApplicationVersion} ({Application.nativeBuildVersion})
         </FontText>
       </View>
     </PageLayout>

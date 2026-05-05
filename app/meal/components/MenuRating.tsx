@@ -4,17 +4,24 @@ import { useTheme } from '@/common/contexts/ThemeContext';
 import FontText from '@/common/text/FontText';
 import colors from '@/constants/colors';
 import { useDeviceId } from '@/utils/device';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 const FILLED_COLOR = '#FAA131';
 const STAR_SIZE = 28;
 const RATINGS = [1, 2, 3, 4, 5] as const;
+const DEBOUNCE_MS = 250;
 
 const MenuRating = ({ menuId }: { menuId: string }) => {
   const { theme } = useTheme();
   const { deviceId } = useDeviceId();
   const { data, mutate } = useMenuRating(menuId, deviceId);
+  const pendingRatingRef = useRef<number | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+  }, []);
 
   if (!data) {
     return null;
@@ -22,7 +29,7 @@ const MenuRating = ({ menuId }: { menuId: string }) => {
 
   const ownRating = data.ownRating ?? 0;
 
-  const handleSelect = async (rating: number) => {
+  const handleSelect = (rating: number) => {
     if (!deviceId) {
       return;
     }
@@ -31,8 +38,21 @@ const MenuRating = ({ menuId }: { menuId: string }) => {
       { ...data, ownRating: nextOwnRating },
       { revalidate: false }
     );
-    const next = await updateMenuRating(menuId, deviceId, rating);
-    mutate(next, { revalidate: false });
+
+    pendingRatingRef.current = rating;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(async () => {
+      const ratingToSend = pendingRatingRef.current;
+      timeoutRef.current = null;
+      pendingRatingRef.current = null;
+      if (ratingToSend == null) return;
+      try {
+        const next = await updateMenuRating(menuId, deviceId, ratingToSend);
+        mutate(next, { revalidate: false });
+      } catch {
+        mutate();
+      }
+    }, DEBOUNCE_MS);
   };
 
   return (

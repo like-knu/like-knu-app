@@ -29,7 +29,8 @@ import {
 } from 'react-native';
 
 const MAX_KEYWORDS = 10;
-const MAX_KEYWORD_LENGTH = 50;
+const MIN_KEYWORD_LENGTH = 2;
+const MAX_KEYWORD_LENGTH = 10;
 
 const KeywordPage = () => {
   const { theme } = useTheme();
@@ -110,8 +111,8 @@ const KeywordPage = () => {
       Alert.alert('키워드 등록 불가', `키워드는 최대 ${MAX_KEYWORDS}개까지 등록할 수 있어요.`);
       return;
     }
-    if (normalized.length > MAX_KEYWORD_LENGTH) {
-      Alert.alert('키워드 등록 불가', `키워드는 ${MAX_KEYWORD_LENGTH}자 이하여야 해요.`);
+    if (normalized.length < MIN_KEYWORD_LENGTH || normalized.length > MAX_KEYWORD_LENGTH) {
+      Alert.alert('키워드 등록 불가', `키워드는 ${MIN_KEYWORD_LENGTH}자 이상 ${MAX_KEYWORD_LENGTH}자 이하여야 해요.`);
       return;
     }
     if (keywords.some((k) => k.keyword === normalized)) {
@@ -188,7 +189,7 @@ const KeywordPage = () => {
               키워드 ({keywords.length}/{MAX_KEYWORDS})
             </FontText>
             <FontText style={[styles.helper, { color: colors[theme].gray100 }]}>
-              관심 있는 단어를 등록하세요. 최대 {MAX_KEYWORDS}개까지 등록할 수 있어요.
+              관심 있는 단어를 등록하세요. 최대 {MAX_KEYWORDS}개, 각 {MIN_KEYWORD_LENGTH}~{MAX_KEYWORD_LENGTH}자까지 등록할 수 있어요.
             </FontText>
 
             <View style={styles.inputRow}>

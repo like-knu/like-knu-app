@@ -10,8 +10,8 @@ import { useTheme } from '@/common/contexts/ThemeContext';
 import FontText from '@/common/text/FontText';
 import colors from '@/constants/colors';
 import { useDeviceId } from '@/utils/device';
-import { usePathname, useRouter } from 'expo-router';
-import { useEffect, useMemo } from 'react';
+import { useLocalSearchParams, usePathname, useRouter } from 'expo-router';
+import { useEffect, useMemo, useRef } from 'react';
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 
 const NotificationPage = () => {
@@ -20,6 +20,11 @@ const NotificationPage = () => {
   const pathname = usePathname();
   const { deviceId } = useDeviceId();
   const { data, isLoading, mutate } = useNotifications();
+  const { autoOpenUrl, autoOpenNotificationId } = useLocalSearchParams<{
+    autoOpenUrl?: string;
+    autoOpenNotificationId?: string;
+  }>();
+  const handledAutoOpenRef = useRef(false);
 
   const notifications = useMemo(() => data ?? [], [data]);
   const hasUnread = useMemo(() => notifications.some((n) => !n.read), [notifications]);
@@ -29,6 +34,29 @@ const NotificationPage = () => {
       mutate();
     }
   }, [pathname]);
+
+  useEffect(() => {
+    if (handledAutoOpenRef.current) return;
+    if (!autoOpenUrl) return;
+    if (autoOpenNotificationId && !deviceId) return;
+    handledAutoOpenRef.current = true;
+
+    if (deviceId && autoOpenNotificationId) {
+      markNotificationAsRead(deviceId, autoOpenNotificationId)
+        .then(() => mutate())
+        .catch(() => {});
+    }
+
+    router.push({
+      pathname: '/announcement/details',
+      params: {
+        url: autoOpenUrl,
+        id: '',
+        isBookmark: 'false',
+        isAd: 'false'
+      }
+    });
+  }, [autoOpenUrl, autoOpenNotificationId, deviceId]);
 
   const onPressItem = async (item: NotificationItem) => {
     if (deviceId && !item.read) {

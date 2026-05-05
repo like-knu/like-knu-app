@@ -2,7 +2,7 @@
   "expo": {
     "name": "공주대처럼",
     "slug": "like-knu",
-    "version": "6.0.0",
+    "version": "6.1.0",
     "platforms": [
       "ios",
       "android"
@@ -12,7 +12,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/icon-ios-v2.icon",
-      "buildNumber": "102",
+      "buildNumber": "106",
       "splash": {
         "image": "./assets/splash-light-v2.png",
         "backgroundColor": "#FFFFFF",
@@ -38,7 +38,7 @@
       "appStoreUrl": "https://apps.apple.com/kr/app/%EA%B3%B5%EC%A3%BC%EB%8C%80%EC%B2%98%EB%9F%BC/id6499512208"
     },
     "android": {
-      "versionCode": 102,
+      "versionCode": 106,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon-v2.png",
         "backgroundColor": "#FFFFFF"
@@ -76,6 +76,7 @@
           },
           "android": {
             "enableProguardInReleaseBuilds": true,
+            "usesCleartextTraffic": true,
             "extraMavenRepos": [
               "https://repository.map.naver.com/archive/maven"
             ]
